@@ -5,7 +5,6 @@ import (
 	"log"
 	memail "portfolio/app/model/email"
 	semail "portfolio/app/service/email"
-	"gopkg.in/gomail.v2"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -20,26 +19,32 @@ func SendEmail(ctx *fiber.Ctx) error {
 		log.Fatal(err.Error())
 	}
 
-	GOMAIL_HOST := `smtp.gmail.com`
-	GOMAIL_PORT := 587
-	GOMAIL_USER := `solodev.business@gmail.com`
-	GOMAIL_PASS := `yjhi yane szed avet`
+	data := struct {
+		Full_Name string
+		Email string
+		Subject string
+		Body string
 
-
-	receive_email := semail.Emailtemplate(GOMAIL_USER, GOMAIL_USER, email_model.Subject, email_model.Body)
-	response_email := semail.Emailtemplate(GOMAIL_USER, email_model.Email, email_model.Subject, "Thank you for your response! We receive your request and will get back to you as soon as we can. Thank you!")
-	
-	d := gomail.NewDialer(GOMAIL_HOST, GOMAIL_PORT, GOMAIL_USER, GOMAIL_PASS)
-
-	receive := d.DialAndSend(receive_email)
-	response := d.DialAndSend(response_email)
-
-	if receive != nil {
-		log.Fatal(receive.Error())
+	}{
+		Full_Name:            email_model.Full_Name,
+		Email:           email_model.Email,
+		Subject: email_model.Subject,
+		Body: email_model.Body,
 	}
 
-	if response != nil {
-		log.Fatal(response.Error())
+	response_path := `C:/Users/Ace Gates/Documents/Portfolio/portfolio-be/app/controller/email/response.html`
+	response_template, _ := semail.RenderTemplate(response_path, data)
+	receive_path := `C:/Users/Ace Gates/Documents/Portfolio/portfolio-be/app/controller/email/receive.html`
+	receive_template, _ := semail.RenderTemplate(receive_path, data)
+
+	receive_email := semail.SendEmail(email_model, receive_template, `solodev.business@gmail.com`)
+	if receive_email != nil {
+		log.Fatal(receive_email.Error())
+	}
+
+	response_email := semail.SendEmail(email_model, response_template, data.Email)
+	if response_email != nil {
+		log.Fatal(response_email.Error())
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{

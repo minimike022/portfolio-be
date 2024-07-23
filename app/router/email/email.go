@@ -7,5 +7,5 @@ import (
 
 
 func SetupEmail(app *fiber.App) {
-	app.Get("/send-email", cemail.SendEmail)
+	app.Post("/send-email", cemail.SendEmail)
 }
